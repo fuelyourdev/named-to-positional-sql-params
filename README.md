@@ -40,7 +40,7 @@ listOf(1, "John")
 You can add it to your project by adding the following line to your `build.gradle.kts`:
 
 ```kotlin
-testImplementation("dev.fuelyour:named-to-positional-sql-params:0.0.1")
+implementation("dev.fuelyour:named-to-positional-sql-params:0.0.1")
 ```
 
 Couple of notes to keep in mind. First, param names can only consist of alphanumeric characters
