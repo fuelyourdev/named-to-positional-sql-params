@@ -223,8 +223,32 @@ class TestConverter : StringSpec({
             ppQuery: String, ppList: List<Any?>
         ) ->
         description {
-            convertNamedToPositional(npQuery, npMap) shouldBe Pair(ppQuery, ppList)
+            convertNamedToPositional(npQuery, npMap) shouldBe PositionalSql(ppQuery, ppList)
         }
+    }
+
+    "the PositionalSql results can be accessed through the sql and params properties" {
+        val sql = "SELECT :id"
+        val params = mapOf("id" to 5)
+
+        val expectedSql = "SELECT $1"
+        val expectedParams = listOf(5)
+
+        val positionalSql = convertNamedToPositional(sql, params)
+        positionalSql.sql shouldBe expectedSql
+        positionalSql.params shouldBe expectedParams
+    }
+
+    "the PositionalSql results can also be destructured" {
+        val sql = "SELECT :id"
+        val params = mapOf("id" to 5)
+
+        val expectedSql = "SELECT $1"
+        val expectedParams = listOf(5)
+
+        val (resultSql, resultParams) = convertNamedToPositional(sql, params)
+        resultSql shouldBe expectedSql
+        resultParams shouldBe expectedParams
     }
 
     listOf(

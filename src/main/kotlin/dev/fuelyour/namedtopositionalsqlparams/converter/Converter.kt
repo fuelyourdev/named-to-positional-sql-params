@@ -2,6 +2,8 @@ package dev.fuelyour.namedtopositionalsqlparams.converter
 
 import dev.fuelyour.namedtopositionalsqlparams.exceptions.InvalidParamKeyNameException
 
+data class PositionalSql(val sql: String, val params: List<Any?>)
+
 /**
  * Converts a sql query using named parameters and a map of parameter names to parameter values
  * into a sql query using positional parameters and a list of parameter values.
@@ -15,13 +17,15 @@ import dev.fuelyour.namedtopositionalsqlparams.exceptions.InvalidParamKeyNameExc
  * @throws InvalidParamKeyNameException if a key name contains characters other than alphanumeric
  *     characters and the underscore
  */
-fun convertNamedToPositional(sql: String, params: Map<String, Any?>): Pair<String, List<Any?>> {
+fun convertNamedToPositional(sql: String, params: Map<String, Any?>): PositionalSql {
     params.verifyParamNames()
-    return params.toList().fold(Pair(sql, listOf())) { (sql, params), (paramName, paramValue) ->
-        val newParams = listOf(*params.toTypedArray(), paramValue)
-        val newSql = sql.replaceNamedParamWithPositional(paramName, newParams.lastIndex)
-        Pair(newSql, newParams)
-    }
+    return params
+        .toList()
+        .fold(PositionalSql(sql, listOf())) { (sql, params), (paramName, paramValue) ->
+            val newParams = listOf(*params.toTypedArray(), paramValue)
+            val newSql = sql.replaceNamedParamWithPositional(paramName, newParams.lastIndex)
+            PositionalSql(newSql, newParams)
+        }
 }
 
 private fun Map<String, Any?>.verifyParamNames() {
