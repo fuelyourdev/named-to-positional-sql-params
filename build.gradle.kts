@@ -13,7 +13,15 @@ val projectDescription = "Simple library that converts sql queries using named p
 description = projectDescription
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+}
+
 repositories {
+    jcenter()
     mavenCentral()
 }
 
