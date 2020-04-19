@@ -7,3 +7,7 @@ sealed class NamedToPositionalSqlParamsException(message: String): RuntimeExcept
 class InvalidParamKeyNameException: NamedToPositionalSqlParamsException(
     "Only alphanumeric characters and the underscore are allowed in parameter names"
 )
+
+class MissingParamException(missing: String): NamedToPositionalSqlParamsException(
+    "Missing parameter for prepared positional sql: $missing"
+)

@@ -1,5 +1,6 @@
 package dev.fuelyour.namedtopositionalsqlparams.converter
 
+import dev.fuelyour.namedtopositionalsqlparams.exceptions.MissingParamException
 import dev.fuelyour.namedtopositionalsqlparams.exceptions.NamedToPositionalSqlParamsException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -205,15 +206,43 @@ class TestConverter : StringSpec({
             listOf("value")
         ),
         row(
-            "parameters following a :: are ignored, even if it matches a key",
+            "parameters following a :: are ignored, even if it matches a supplied param name",
             """
-              SELECT :text::text
+                SELECT :text::text
             """.trimIndent(),
             mapOf("text" to "Some text"),
             """
-              SELECT $1::text
+                SELECT $1::text
             """.trimIndent(),
             listOf("Some text")
+        ),
+        row(
+            "parameters in the map and not in the query are still in the param list",
+            """
+                SELECT :id, :name
+            """.trimIndent(),
+            mapOf(
+                "id" to 1,
+                "name" to "Tony",
+                "username" to "tony32"
+            ),
+            """
+                SELECT $1, $2
+            """.trimIndent(),
+            listOf(1, "Tony", "tony32")
+        ),
+        row(
+            "parameters in the query and not in the map do not get replaced",
+            """
+                SELECT :id, :name
+            """.trimIndent(),
+            mapOf(
+                "name" to "Sue"
+            ),
+            """
+                SELECT :id, $1
+            """.trimIndent(),
+            listOf("Sue")
         )
     ).map {
         (
@@ -249,6 +278,71 @@ class TestConverter : StringSpec({
         val (resultSql, resultParams) = convertNamedToPositional(sql, params)
         resultSql shouldBe expectedSql
         resultParams shouldBe expectedParams
+    }
+
+    "the query can be prepared once, then reused with different parameters" {
+        val sql = """
+                SELECT *
+                FROM users
+                WHERE id = :id
+                AND name = :name
+            """.trimIndent()
+        val paramNames = linkedSetOf("id", "name")
+
+        val params1 = mapOf(
+            "id" to 1,
+            "name" to "Bob"
+        )
+        val params2 = mapOf(
+            "id" to 2,
+            "name" to "Stacy"
+        )
+
+        val expectedSql = """
+                SELECT *
+                FROM users
+                WHERE id = $1
+                AND name = $2
+            """.trimIndent()
+        val expectedParams1 = listOf(1, "Bob")
+        val expectedParams2 = listOf(2, "Stacy")
+
+        val preparedPositionalSql = prepareNamedAsPositional(sql, paramNames)
+
+        preparedPositionalSql.sql shouldBe expectedSql
+
+        preparedPositionalSql.convertParams(params1) shouldBe expectedParams1
+        preparedPositionalSql.convertParams(params2) shouldBe expectedParams2
+    }
+
+    "extra params passed to a prepared statement are ignored" {
+        val sql = "SELECT :id, :name"
+        val paramNames = linkedSetOf("id", "name")
+        val params = mapOf(
+            "id" to 3,
+            "name" to "Paul",
+            "username" to "paul300"
+        )
+        val expectedSql = "SELECT $1, $2"
+        val expectedParams = listOf(3, "Paul")
+        val prepared = prepareNamedAsPositional(sql, paramNames)
+
+        prepared.sql shouldBe expectedSql
+        prepared.convertParams(params) shouldBe expectedParams
+    }
+
+    "missing params for a prepared positional query throws an exception" {
+        val sql = "SELECT :id, :name"
+        val paramNames = linkedSetOf("id", "name")
+        val params = mapOf("id" to 1)
+
+        val expectedSql = "SELECt $1, $2"
+
+        val prepared = prepareNamedAsPositional(sql, paramNames)
+
+        shouldThrow<MissingParamException> {
+            prepared.convertParams(params)
+        }
     }
 
     listOf(

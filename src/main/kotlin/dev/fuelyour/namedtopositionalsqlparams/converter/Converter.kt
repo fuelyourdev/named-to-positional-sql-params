@@ -1,8 +1,20 @@
 package dev.fuelyour.namedtopositionalsqlparams.converter
 
 import dev.fuelyour.namedtopositionalsqlparams.exceptions.InvalidParamKeyNameException
+import dev.fuelyour.namedtopositionalsqlparams.exceptions.MissingParamException
 
 data class PositionalSql(val sql: String, val params: List<Any?>)
+
+class PreparedPositionalSql(val sql: String, private val paramNames: LinkedHashSet<String>) {
+    fun convertParams(params: Map<String, Any?>): List<Any?> {
+        return paramNames.map {
+            if (!params.containsKey(it)) {
+                throw MissingParamException(it)
+            }
+            params[it]
+        }
+    }
+}
 
 /**
  * Converts a sql query using named parameters and a map of parameter names to parameter values
@@ -18,7 +30,7 @@ data class PositionalSql(val sql: String, val params: List<Any?>)
  *     characters and the underscore
  */
 fun convertNamedToPositional(sql: String, params: Map<String, Any?>): PositionalSql {
-    params.verifyParamNames()
+    params.keys.verifyParamNames()
     return params
         .toList()
         .fold(PositionalSql(sql, listOf())) { (sql, params), (paramName, paramValue) ->
@@ -28,9 +40,21 @@ fun convertNamedToPositional(sql: String, params: Map<String, Any?>): Positional
         }
 }
 
-private fun Map<String, Any?>.verifyParamNames() {
+@Suppress("NAME_SHADOWING")
+fun prepareNamedAsPositional(
+    sql: String,
+    paramNames: LinkedHashSet<String>
+): PreparedPositionalSql {
+    paramNames.verifyParamNames()
+    return paramNames
+        .foldIndexed(sql) { index, sql, paramName ->
+            sql.replaceNamedParamWithPositional(paramName, index)
+        }.let { PreparedPositionalSql(it, paramNames) }
+}
+
+private fun Set<String>.verifyParamNames() {
     val charNotAlphaNumericUnderscore = """\W""".toRegex()
-    if (any { (paramName, _) -> paramName.contains(charNotAlphaNumericUnderscore) }) {
+    if (any { paramName -> paramName.contains(charNotAlphaNumericUnderscore) }) {
         throw InvalidParamKeyNameException()
     }
 }
