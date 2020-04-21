@@ -287,7 +287,7 @@ class TestConverter : StringSpec({
                 WHERE id = :id
                 AND name = :name
             """.trimIndent()
-        val paramNames = linkedSetOf("id", "name")
+        val paramNames = setOf("id", "name")
 
         val params1 = mapOf(
             "id" to 1,
@@ -317,7 +317,7 @@ class TestConverter : StringSpec({
 
     "extra params passed to a prepared statement are ignored" {
         val sql = "SELECT :id, :name"
-        val paramNames = linkedSetOf("id", "name")
+        val paramNames = setOf("id", "name")
         val params = mapOf(
             "id" to 3,
             "name" to "Paul",
@@ -333,16 +333,56 @@ class TestConverter : StringSpec({
 
     "missing params for a prepared positional query throws an exception" {
         val sql = "SELECT :id, :name"
-        val paramNames = linkedSetOf("id", "name")
+        val paramNames = setOf("id", "name")
         val params = mapOf("id" to 1)
 
-        val expectedSql = "SELECt $1, $2"
+        val expectedSql = "SELECT $1, $2"
 
         val prepared = prepareNamedAsPositional(sql, paramNames)
+        prepared.sql shouldBe expectedSql
 
         shouldThrow<MissingParamException> {
             prepared.convertParams(params)
         }
+    }
+
+    "if paramNames are not supplied, they can be generated from searching the query" {
+        val sql = "SELECT :id, :name"
+        val params = mapOf("id" to 1, "name" to "Jill")
+
+        val expectedSql = "SELECT $1, $2"
+        val expectedParamNames = listOf("id", "name")
+        val expectedParams = listOf(1, "Jill")
+
+        val prepared = prepareNamedAsPositional(sql)
+        prepared.sql shouldBe expectedSql
+        prepared.paramNames shouldBe expectedParamNames
+
+        val resultParams = prepared.convertParams(params)
+        resultParams shouldBe expectedParams
+    }
+
+    "can auto detect param names in sql, even when at the beginning, end, or close together" {
+        val sql = ":test1:test2:test1:test3:test2:test3"
+
+        val expectedSql = "$1$2$1$3$2$3"
+        val expectedParamNames = listOf("test1", "test2", "test3")
+
+        val prepared = prepareNamedAsPositional(sql)
+        prepared.sql shouldBe expectedSql
+        prepared.paramNames shouldBe expectedParamNames
+    }
+
+    "prepared positional sql can be converted to positional sql" {
+        val sql = "SELECT :id"
+        val params = mapOf("id" to 5)
+
+        val expected = PositionalSql("SELECT $1", listOf(5))
+
+        val prepared = prepareNamedAsPositional(sql)
+        val positional = prepared.toPositionSql(params)
+
+        positional shouldBe expected
     }
 
     listOf(
