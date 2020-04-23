@@ -1,7 +1,7 @@
-package dev.fuelyour.namedtopositionalsqlparams.converter
+package dev.fuelyour.namedToPositionalSqlParams.converter
 
-import dev.fuelyour.namedtopositionalsqlparams.exceptions.MissingParamException
-import dev.fuelyour.namedtopositionalsqlparams.exceptions.NamedToPositionalSqlParamsException
+import dev.fuelyour.namedToPositionalSqlParams.exceptions.MissingParamException
+import dev.fuelyour.namedToPositionalSqlParams.exceptions.NamedToPositionalSqlParamsException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.row
@@ -10,8 +10,8 @@ import io.kotest.matchers.shouldBe
 class TestConverter : StringSpec({
     listOf(
         row(
-            "convertNamedToPositional should replace named parameters with positional " +
-                "parameter according to map placement",
+            "convertNamedToPositional should replace named parameters with " +
+                "positional parameter according to map placement",
             """
                 SELECT *
                 FROM users
@@ -31,8 +31,8 @@ class TestConverter : StringSpec({
             listOf(1, "Bob")
         ),
         row(
-            "ordering of the parameters in the query itself won't affect positional " +
-                "parameter numbers",
+            "ordering of the parameters in the query itself won't affect " +
+                "positional parameter numbers",
             """
                 SELECT *
                 FROM users
@@ -52,7 +52,8 @@ class TestConverter : StringSpec({
             listOf(1, "Bob")
         ),
         row(
-            "ordering of the parameters in the map will affect positional parameter numbers",
+            "ordering of the parameters in the map will affect positional " +
+                "parameter numbers",
             """
                 SELECT *
                 FROM users
@@ -72,8 +73,8 @@ class TestConverter : StringSpec({
             listOf("Bob", 1)
         ),
         row(
-            "parameters can be used multiple times in a query and will still be assigned " +
-                "the correct number",
+            "parameters can be used multiple times in a query and will still " +
+                "be assigned the correct number",
             """
                 SELECT *
                 FROM users
@@ -95,8 +96,8 @@ class TestConverter : StringSpec({
             listOf(1, "Bob")
         ),
         row(
-            "convertNamedToPositional can properly handle parameter names that are " +
-                "substrings of other parameter names",
+            "convertNamedToPositional can properly handle parameter names " +
+                "that are substrings of other parameter names",
             """
                 SELECT *
                 FROM users
@@ -206,7 +207,8 @@ class TestConverter : StringSpec({
             listOf("value")
         ),
         row(
-            "parameters following a :: are ignored, even if it matches a supplied param name",
+            "parameters following a :: are ignored, even if it matches a " +
+                "supplied param name",
             """
                 SELECT :text::text
             """.trimIndent(),
@@ -217,7 +219,8 @@ class TestConverter : StringSpec({
             listOf("Some text")
         ),
         row(
-            "parameters in the map and not in the query are still in the param list",
+            "parameters in the map and not in the query are still in the " +
+                "param list",
             """
                 SELECT :id, :name
             """.trimIndent(),
@@ -252,11 +255,13 @@ class TestConverter : StringSpec({
             ppQuery: String, ppList: List<Any?>
         ) ->
         description {
-            convertNamedToPositional(npQuery, npMap) shouldBe PositionalSql(ppQuery, ppList)
+            val result = convertNamedToPositional(npQuery, npMap)
+            result shouldBe PositionalSql(ppQuery, ppList)
         }
     }
 
-    "the PositionalSql results can be accessed through the sql and params properties" {
+    ("the PositionalSql results can be accessed through the sql and params " +
+        "properties") {
         val sql = "SELECT :id"
         val params = mapOf("id" to 5)
 
@@ -346,7 +351,9 @@ class TestConverter : StringSpec({
         }
     }
 
-    "if paramNames are not supplied, they can be generated from searching the query" {
+    ("if paramNames are not supplied, they can be generated from searching " +
+        "the query") {
+
         val sql = "SELECT :id, :name"
         val params = mapOf("id" to 1, "name" to "Jill")
 
@@ -362,7 +369,9 @@ class TestConverter : StringSpec({
         resultParams shouldBe expectedParams
     }
 
-    "can auto detect param names in sql, even when at the beginning, end, or close together" {
+    ("can auto detect param names in sql, even when at the beginning, end, " +
+        "or close together") {
+
         val sql = ":test1:test2:test1:test3:test2:test3"
 
         val expectedSql = "$1$2$1$3$2$3"
@@ -389,32 +398,39 @@ class TestConverter : StringSpec({
         row("parameter names with non alphanumeric characters are not allowed",
             "SELECT :id",
             mapOf(": ," to "value"),
-            "Only alphanumeric characters and the underscore are allowed in parameter names"
+            "Only alphanumeric characters and the underscore are allowed in " +
+                "parameter names"
         ),
         row("cannot use $<number> format as a key name",
             "SELECT :$1",
             mapOf("$1" to "value"),
-            "Only alphanumeric characters and the underscore are allowed in parameter names"
+            "Only alphanumeric characters and the underscore are allowed in " +
+                "parameter names"
         ),
         row("non alphanumeric character prevented at the beginning",
             "SELECT :*test",
             mapOf("*test" to "value"),
-            "Only alphanumeric characters and the underscore are allowed in parameter names"
+            "Only alphanumeric characters and the underscore are allowed in " +
+                "parameter names"
         ),
         row("non alphanumeric character prevented in the middle",
             "SELECT :te+st",
             mapOf("te+st" to "value"),
-            "Only alphanumeric characters and the underscore are allowed in parameter names"
+            "Only alphanumeric characters and the underscore are allowed in " +
+                "parameter names"
         ),
         row("non alphanumeric character prevented at the end",
             "SELECT :test=",
             mapOf("test=" to "value"),
-            "Only alphanumeric characters and the underscore are allowed in parameter names"
+            "Only alphanumeric characters and the underscore are allowed in " +
+                "parameter names"
         ),
-        row("non alphanumeric character prevented at multiple places at simultaneously",
+        row("non alphanumeric character prevented at multiple places at " +
+                "simultaneously",
             "SELECT :%t^e-s@t ",
             mapOf("%t^e-s@t " to "value"),
-            "Only alphanumeric characters and the underscore are allowed in parameter names"
+            "Only alphanumeric characters and the underscore are allowed in " +
+                "parameter names"
         )
     ).map {
         (
