@@ -28,5 +28,5 @@ jobs:
       env:
         ossrhUsername: ${{ secrets.ossrhUsername }}
         ossrhPassword: ${{ secrets.ossrhPassword }}
-        ORG_GRADLE_PROJECT_signingKey: ${{ secrects.ORG_GRADLE_PROJECT_signingKey }}
-        ORG_GRADLE_PROJECT_signingPassword: ${{ secrects.ORG_GRADLE_PROJECT_signingPassword }}
+        ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_signingKey }}
+        ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_signingPassword }}
