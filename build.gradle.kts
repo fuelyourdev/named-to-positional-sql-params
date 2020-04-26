@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "dev.fuelyour"
-version = "0.0.3"
+version = "0.0.4-SNAPSHOT"
 val projectDescription = "Simple library that converts sql queries using " +
     "named parameters into sql queries using positional parameters, thus " +
     "allowing you to use named parameters even if your database tools only " +
@@ -111,11 +111,9 @@ publishing {
                 "https://oss.sonatype.org/content/repositories/snapshots"
             }
             url = uri(repoUrl)
-            if (extra.has("ossrhUsername") && extra.has("ossrhPassword")) {
-                credentials {
-                    username = extra["ossrhUsername"] as String
-                    password = extra["ossrhPassword"] as String
-                }
+            credentials {
+                username = System.getenv("ossrhUsername")
+                password = System.getenv("ossrhPassword")
             }
         }
     }
@@ -123,6 +121,9 @@ publishing {
 
 if (rootProject.extra["isReleaseVersion"] as Boolean) {
     signing {
+        val signingKey: String? by project
+        val signingPassword: String? by project
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications["mavenJava"])
     }
 }
