@@ -132,5 +132,4 @@ if (rootProject.extra["isReleaseVersion"] as Boolean) {
 nexusStaging {
     username = System.getenv("ossrhUsername")
     password = System.getenv("ossrhPassword")
-    packageGroup = "${rootProject.group}.${rootProject.name}"
 }
