@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.dokka") version "0.10.1"
     signing
     `maven-publish`
+    id("io.codearte.nexus-staging") version "0.21.2"
 }
 
 group = "dev.fuelyour"
@@ -126,4 +127,10 @@ if (rootProject.extra["isReleaseVersion"] as Boolean) {
         useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications["mavenJava"])
     }
+}
+
+nexusStaging {
+    username = System.getenv("ossrhUsername")
+    password = System.getenv("ossrhPassword")
+    packageGroup = rootProject.group.toString() + rootProject.name
 }
