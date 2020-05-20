@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.fuelyour"
-version = "0.0.6"
+version = "0.0.7-SNAPSHOT"
 val projectDescription = "Simple library that converts sql queries using " +
     "named parameters into sql queries using positional parameters, thus " +
     "allowing you to use named parameters even if your database tools only " +
