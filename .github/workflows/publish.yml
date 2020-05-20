@@ -30,3 +30,9 @@ jobs:
         ossrhPassword: ${{ secrets.ossrhPassword }}
         ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_signingKey }}
         ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_signingPassword }}
+
+    - name: Close and Release from Staging if not Snapshot
+      run: ./scripts/closeAndReleaseIfNotSnapshot.sh
+      env:
+        ossrhUsername: ${{ secrets.ossrhUsername }}
+        ossrhPassword: ${{ secrets.ossrhPassword }}
